@@ -15,6 +15,11 @@ Route::post("login", [ApiController::class, "login"]);
 Route::group([
     "middleware" => ["auth:api"]
 ], function(){
+    // Ruta de validación de token (nueva)
+    Route::post('/validate-token', function (Request $request) {
+        return response()->json(['valid' => true]);
+    });
+
     // User Profile Routes
     Route::get("profile", [ApiController::class, "profile"]);
     Route::get("refresh-token", [ApiController::class, "refreshToken"]);
@@ -22,6 +27,12 @@ Route::group([
 
     // Admin Routes
     Route::group(['middleware' => ['check.role:admin']], function () {
+        // User management (solo admin)
+        Route::get('users', [ApiController::class, 'getUsers']);
+        Route::post('users', [ApiController::class, 'store']);
+        Route::put('users/{user}', [ApiController::class, 'update']);
+        Route::delete('users/{user}', [ApiController::class, 'destroy']);
+        
         // Restaurant management (solo POST, PUT, DELETE)
         Route::post('restaurants', [RestaurantController::class, 'store']);
         Route::put('restaurants/{restaurant}', [RestaurantController::class, 'update']);
