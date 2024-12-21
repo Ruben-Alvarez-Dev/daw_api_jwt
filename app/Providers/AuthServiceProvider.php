@@ -5,11 +5,22 @@ namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Authentication Service Provider
+ * 
+ * Registers authentication-related services:
+ * - Policy mappings for authorization
+ * - Custom authentication providers
+ * - JWT authentication configuration
+ * 
+ * This provider extends Laravel's base authentication
+ * to support custom field names and JWT tokens.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * The model to policy mappings for the application.
-     *
+     * Model to policy mappings
+     * 
      * @var array<class-string, class-string>
      */
     protected $policies = [
@@ -17,7 +28,11 @@ class AuthServiceProvider extends ServiceProvider
     ];
 
     /**
-     * Register any authentication / authorization services.
+     * Register authentication services
+     * 
+     * Configures:
+     * - Custom user provider for JWT
+     * - JWT authentication guard
      */
     public function boot(): void
     {

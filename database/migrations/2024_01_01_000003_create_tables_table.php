@@ -4,6 +4,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Restaurant Tables Migration
+ * 
+ * Creates the tables table for restaurant seating:
+ * - table_id: Primary key
+ * - restaurant_id: Foreign key to restaurants
+ * - table_name: Unique identifier within restaurant
+ * - table_capacity: Number of seats
+ * - table_zone: Must match a zone from restaurant_zones
+ * - table_status: Current availability status
+ * 
+ * Constraints:
+ * - Composite unique key [restaurant_id, table_name]
+ * - Cascade delete with restaurant
+ * - table_zone must match parent restaurant zones
+ */
 return new class extends Migration
 {
     public function up(): void

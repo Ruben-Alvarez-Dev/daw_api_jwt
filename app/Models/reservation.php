@@ -5,6 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Reservation Model
+ * 
+ * @property int $reservation_id
+ * @property int $user_id
+ * @property int $restaurant_id
+ * @property array $reservation_tables
+ * @property Carbon $reservation_datetime
+ * @property string $reservation_status
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * 
+ * @property-read User $user
+ * @property-read Restaurant $restaurant
+ * 
+ * @method static Reservation create(array $attributes)
+ * @method static Reservation find($id)
+ * @method static Collection where($column, $operator = null, $value = null)
+ */
 class Reservation extends Model
 {
     use HasFactory;

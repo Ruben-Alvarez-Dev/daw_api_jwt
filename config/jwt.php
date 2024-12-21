@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * JWT Authentication Configuration
+ * 
+ * Settings for JWT token handling:
+ * - Token lifetime and refresh
+ * - Encryption algorithms
+ * - Key generation and storage
+ * - Token blacklist options
+ * 
+ * Security settings:
+ * - Uses HS256 encryption by default
+ * - Token expires in 60 minutes
+ * - Blacklist grace period: 30 seconds
+ * - Required claims: nbf, iat, exp
+ */
+
 return [
     /*
     |--------------------------------------------------------------------------

@@ -7,6 +7,19 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Queue Jobs Table Migration
+     * 
+     * Creates the jobs table for Laravel's queue system:
+     * - queue: Queue name for job processing
+     * - payload: Job data and class information
+     * - attempts: Number of processing attempts
+     * - reserved_at: Timestamp when job was reserved
+     * - available_at: When job becomes available
+     * - created_at: Job creation timestamp
+     * 
+     * Used by Laravel's queue system for database queue driver
+     */
+    /**
      * Run the migrations.
      */
     public function up(): void

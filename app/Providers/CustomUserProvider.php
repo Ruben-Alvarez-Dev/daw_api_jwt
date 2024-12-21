@@ -5,6 +5,21 @@ namespace App\Providers;
 use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 
+/**
+ * Custom JWT User Provider
+ * 
+ * Handles authentication with custom field names:
+ * - user_email instead of email
+ * - user_password instead of password
+ * 
+ * This provider is registered in AuthServiceProvider and
+ * configured in config/auth.php under the 'providers' key.
+ * 
+ * @method User retrieveById($identifier)
+ * @method User retrieveByToken($identifier, $token)
+ * @method User retrieveByCredentials(array $credentials)
+ * @method bool validateCredentials(User $user, array $credentials)
+ */
 class CustomUserProvider extends EloquentUserProvider
 {
     /**
@@ -70,11 +85,11 @@ class CustomUserProvider extends EloquentUserProvider
      */
     public function validateCredentials(UserContract $user, array $credentials)
     {
-        if (! isset($credentials['password'])) {
+        if (! isset($credentials['user_password'])) {
             return false;
         }
 
-        $plain = $credentials['password'];
+        $plain = $credentials['user_password'];
 
         return $this->hasher->check($plain, $user->getAuthPassword());
     }

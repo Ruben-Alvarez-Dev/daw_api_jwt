@@ -4,6 +4,21 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Users Migration
+ * 
+ * Creates the main users table with the following fields:
+ * - user_id: Primary key
+ * - user_name: User's full name
+ * - user_email: Unique email for authentication
+ * - user_password: Hashed password
+ * - user_role: User role (admin/supervisor/customer)
+ * - user_phone: Optional contact number
+ * - user_address: Optional delivery address
+ * - user_visit_number: Counter for customer visits
+ * - user_status: Account status (active/inactive)
+ * - active_token: JWT token for authentication
+ */
 return new class extends Migration
 {
    /**
@@ -18,6 +33,7 @@ return new class extends Migration
            $table->timestamp('user_email_verified_at')->nullable();
            $table->string('user_password');
            $table->enum('user_role', ['admin', 'supervisor', 'customer'])->default('customer'); // Añadido el role
+           $table->string('user_created_by')->nullable(); // Email del supervisor que creó al usuario
            $table->string('user_phone')->nullable();
            $table->text('user_address')->nullable();
            $table->integer('user_visit_number')->default(0);

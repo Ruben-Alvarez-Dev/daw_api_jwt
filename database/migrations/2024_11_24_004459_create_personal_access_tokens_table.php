@@ -4,6 +4,19 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Personal Access Tokens Migration
+ * 
+ * Creates the personal_access_tokens table for API authentication:
+ * - tokenable: Polymorphic relation to user
+ * - name: Token name/purpose
+ * - token: Hashed token string
+ * - abilities: Token permissions
+ * - last_used_at: Last usage timestamp
+ * - expires_at: Token expiration
+ * 
+ * Used by Laravel Sanctum for API token authentication
+ */
 return new class extends Migration
 {
     /**

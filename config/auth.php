@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * Authentication Configuration
+ * 
+ * Defines authentication settings:
+ * - Default authentication guard (api)
+ * - User providers configuration
+ * - JWT token settings
+ * - Password reset options
+ * 
+ * Custom configurations:
+ * - Uses JWT for API authentication
+ * - Custom user provider for field mapping
+ * - Stateless API authentication
+ */
+
 return [
 
     /*
