@@ -24,7 +24,7 @@ class RestaurantController extends Controller
     */
    public function store(Request $request)
    {
-       if (auth()->user()->role !== 'admin') {
+       if (auth()->user()->user_role !== 'admin') {
            return response()->json([
                'status' => false,
                'message' => 'Unauthorized - Admin access required'
@@ -32,7 +32,7 @@ class RestaurantController extends Controller
        }
 
        $request->validate([
-           'name' => 'required|string|max:255'
+           'restaurant_name' => 'required|string|max:255'
        ]);
 
        $restaurant = Restaurant::create($request->all());
@@ -46,9 +46,9 @@ class RestaurantController extends Controller
    /**
     * Display the specified resource.
     */
-   public function show($id_restaurant)
+   public function show($restaurant_id)
    {
-       $restaurant = Restaurant::find($id_restaurant);
+       $restaurant = Restaurant::find($restaurant_id);
        
        if (!$restaurant) {
            return response()->json([
@@ -66,16 +66,16 @@ class RestaurantController extends Controller
    /**
     * Update the specified resource in storage.
     */
-   public function update(Request $request, $id_restaurant)
+   public function update(Request $request, $restaurant_id)
    {
-       if (auth()->user()->role !== 'admin') {
+       if (auth()->user()->user_role !== 'admin') {
            return response()->json([
                'status' => false,
                'message' => 'Unauthorized - Admin access required'
            ], 403);
        }
 
-       $restaurant = Restaurant::find($id_restaurant);
+       $restaurant = Restaurant::find($restaurant_id);
        
        if (!$restaurant) {
            return response()->json([
@@ -85,11 +85,11 @@ class RestaurantController extends Controller
        }
 
        $request->validate([
-           'name' => 'sometimes|string|max:255',
-           'capacity' => 'sometimes|integer|min:1',
-           'zones' => 'sometimes|array',
-           'isActive' => 'sometimes|boolean',
-           'status' => 'sometimes|in:tables available,fully booked'
+           'restaurant_name' => 'sometimes|string|max:255',
+           'restaurant_capacity' => 'sometimes|integer|min:1',
+           'restaurant_zones' => 'sometimes|array',
+           'restaurant_is_active' => 'sometimes|boolean',
+           'restaurant_status' => 'sometimes|in:tables available,fully booked'
        ]);
 
        $restaurant->update($request->all());
@@ -103,16 +103,16 @@ class RestaurantController extends Controller
    /**
     * Remove the specified resource from storage.
     */
-   public function destroy($id_restaurant)
+   public function destroy($restaurant_id)
    {
-       if (auth()->user()->role !== 'admin') {
+       if (auth()->user()->user_role !== 'admin') {
            return response()->json([
                'status' => false,
                'message' => 'Unauthorized - Admin access required'
            ], 403);
        }
 
-       $restaurant = Restaurant::find($id_restaurant);
+       $restaurant = Restaurant::find($restaurant_id);
        
        if (!$restaurant) {
            return response()->json([
@@ -125,6 +125,6 @@ class RestaurantController extends Controller
        return response()->json([
            'status' => true,
            'message' => 'Restaurant deleted successfully'
-       ], 200);
+       ]);
    }
 }

@@ -12,12 +12,17 @@ return new class extends Migration
    public function up(): void
    {
        Schema::create('users', function (Blueprint $table) {
-           $table->id();
-           $table->string('name');
-           $table->string('email')->unique();
-           $table->timestamp('email_verified_at')->nullable();
-           $table->string('password');
-           $table->enum('role', ['admin', 'supervisor', 'customer'])->default('customer'); // Añadido el role
+           $table->id('user_id');
+           $table->string('user_name');
+           $table->string('user_email')->unique();
+           $table->timestamp('user_email_verified_at')->nullable();
+           $table->string('user_password');
+           $table->enum('user_role', ['admin', 'supervisor', 'customer'])->default('customer'); // Añadido el role
+           $table->string('user_phone')->nullable();
+           $table->text('user_address')->nullable();
+           $table->integer('user_visit_number')->default(0);
+           $table->enum('user_status', ['active', 'inactive'])->default('active');
+           $table->text('active_token')->nullable(); // Para JWT
            $table->rememberToken();
            $table->timestamps();
        });
@@ -43,8 +48,8 @@ return new class extends Migration
     */
    public function down(): void
    {
-       Schema::dropIfExists('users');
-       Schema::dropIfExists('password_reset_tokens');
        Schema::dropIfExists('sessions');
+       Schema::dropIfExists('password_reset_tokens');
+       Schema::dropIfExists('users');
    }
 };

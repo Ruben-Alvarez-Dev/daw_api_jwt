@@ -24,7 +24,7 @@ class TableController extends Controller
      */
     public function store(Request $request)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (auth()->user()->user_role !== 'admin') {
             return response()->json([
                 'status' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -32,14 +32,14 @@ class TableController extends Controller
         }
 
         $request->validate([
-            'id_restaurant' => 'required|exists:restaurants,id_restaurant',
-            'number' => 'required|string',
-            'capacity' => 'required|integer|min:1'
+            'restaurant_id' => 'required|exists:restaurants,restaurant_id',
+            'table_number' => 'required|string',
+            'table_capacity' => 'required|integer|min:1'
         ]);
 
         // Verificar número de mesa único para el restaurante
-        $exists = Table::where('id_restaurant', $request->id_restaurant)
-                      ->where('number', $request->number)
+        $exists = Table::where('restaurant_id', $request->restaurant_id)
+                      ->where('table_number', $request->table_number)
                       ->exists();
                       
         if ($exists) {
@@ -61,9 +61,9 @@ class TableController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id_table)
+    public function show($table_id)
     {
-        $table = Table::with('restaurant')->find($id_table);
+        $table = Table::with('restaurant')->find($table_id);
         
         if (!$table) {
             return response()->json([
@@ -81,16 +81,16 @@ class TableController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id_table)
+    public function update(Request $request, $table_id)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (auth()->user()->user_role !== 'admin') {
             return response()->json([
                 'status' => false,
                 'message' => 'Unauthorized - Admin access required'
             ], 403);
         }
 
-        $table = Table::find($id_table);
+        $table = Table::find($table_id);
         
         if (!$table) {
             return response()->json([
@@ -100,15 +100,20 @@ class TableController extends Controller
         }
 
         $request->validate([
-            'number' => 'sometimes|string',
-            'capacity' => 'sometimes|integer|min:1',
-            'status' => 'sometimes|in:available,unavailable'
+            'restaurant_id' => 'sometimes|exists:restaurants,restaurant_id',
+            'table_number' => 'sometimes|string',
+            'table_capacity' => 'sometimes|integer|min:1',
+            'table_status' => 'sometimes|in:available,unavailable'
         ]);
 
-        // Si están cambiando el número, verificar que no esté duplicado
-        if ($request->has('number') && $request->number !== $table->number) {
-            $exists = Table::where('id_restaurant', $table->id_restaurant)
-                          ->where('number', $request->number)
+        // Si se está actualizando el número de mesa, verificar que sea único
+        if ($request->has('table_number') && 
+            ($request->table_number !== $table->table_number || 
+             ($request->has('restaurant_id') && $request->restaurant_id !== $table->restaurant_id))) {
+            
+            $exists = Table::where('restaurant_id', $request->restaurant_id ?? $table->restaurant_id)
+                          ->where('table_number', $request->table_number)
+                          ->where('table_id', '!=', $table_id)
                           ->exists();
             
             if ($exists) {
@@ -131,16 +136,16 @@ class TableController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id_table)
+    public function destroy($table_id)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (auth()->user()->user_role !== 'admin') {
             return response()->json([
                 'status' => false,
                 'message' => 'Unauthorized - Admin access required'
             ], 403);
         }
 
-        $table = Table::find($id_table);
+        $table = Table::find($table_id);
         
         if (!$table) {
             return response()->json([
@@ -154,15 +159,15 @@ class TableController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Table deleted successfully'
-        ], 200);
+        ]);
     }
 
     /**
      * Get tables by restaurant
      */
-    public function getTablesByRestaurant($id_restaurant)
+    public function getTablesByRestaurant($restaurant_id)
     {
-        $tables = Table::where('id_restaurant', $id_restaurant)->get();
+        $tables = Table::where('restaurant_id', $restaurant_id)->get();
         
         if ($tables->isEmpty()) {
             return response()->json([

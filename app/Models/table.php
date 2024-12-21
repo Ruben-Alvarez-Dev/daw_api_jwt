@@ -9,18 +9,22 @@ class Table extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'id_table';
+    protected $primaryKey = 'table_id';
 
     protected $fillable = [
-        'id_restaurant',
-        'number',
-        'capacity',
-        'status'
+        'restaurant_id',
+        'table_number',
+        'table_capacity',
+        'table_status'
+    ];
+
+    protected $casts = [
+        'table_capacity' => 'integer'
     ];
 
     // Relación con Restaurant
     public function restaurant()
     {
-        return $this->belongsTo(Restaurant::class, 'id_restaurant', 'id_restaurant');
+        return $this->belongsTo(Restaurant::class, 'restaurant_id', 'restaurant_id');
     }
 }

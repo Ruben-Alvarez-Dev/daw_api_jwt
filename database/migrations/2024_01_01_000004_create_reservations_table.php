@@ -6,37 +6,33 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('reservations', function (Blueprint $table) {
-            $table->id('id_reservation');
-            $table->foreignId('id_user')
-                ->constrained('users', 'id')
+            $table->id('reservation_id');
+            $table->foreignId('reservation_user_id')
+                ->constrained('users', 'user_id')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->foreignId('id_restaurant')
-                ->constrained('restaurants', 'id_restaurant')
+            $table->foreignId('reservation_restaurant_id')
+                ->constrained('restaurants', 'restaurant_id')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->json('tables')->nullable(); // Array de números de mesa
-            $table->dateTime('datetime');
-            $table->enum('status', [
+            $table->json('reservation_table_ids');
+            $table->dateTime('reservation_date_time');
+            $table->integer('reservation_guests');
+            $table->text('reservation_comment')->nullable();
+            $table->enum('reservation_status', [
                 'pending',
                 'confirmed',
                 'seated',
-                'canceled',
-                'closed'
+                'completed',
+                'canceled'
             ])->default('pending');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('reservations');

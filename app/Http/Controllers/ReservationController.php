@@ -17,17 +17,17 @@ class ReservationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_restaurant' => 'required|exists:restaurants,id_restaurant',
-            'tables' => 'required|array',
-            'datetime' => 'required|date|after:now',
-            'status' => 'sometimes|in:pending,confirmed,seated,canceled,closed'
+            'restaurant_id' => 'required|exists:restaurants,restaurant_id',
+            'reservation_tables' => 'required|array',
+            'reservation_datetime' => 'required|date|after:now',
+            'reservation_status' => 'sometimes|in:pending,confirmed,seated,canceled,closed'
         ]);
 
         // Verificar disponibilidad de mesas
-        foreach ($request->tables as $tableNumber) {
-            $table = Table::where('id_restaurant', $request->id_restaurant)
-                         ->where('number', $tableNumber)
-                         ->where('status', 'available')
+        foreach ($request->reservation_tables as $tableNumber) {
+            $table = Table::where('restaurant_id', $request->restaurant_id)
+                         ->where('table_number', $tableNumber)
+                         ->where('table_status', 'available')
                          ->first();
             
             if (!$table) {
@@ -39,17 +39,17 @@ class ReservationController extends Controller
 
         // Crear la reserva
         $reservation = Reservation::create([
-            'id_user' => auth()->id(), // Asumiendo que usas autenticación
-            'id_restaurant' => $request->id_restaurant,
-            'tables' => $request->tables,
-            'datetime' => $request->datetime,
-            'status' => $request->status ?? 'pending'
+            'user_id' => auth()->user()->user_id,
+            'restaurant_id' => $request->restaurant_id,
+            'reservation_tables' => $request->reservation_tables,
+            'reservation_datetime' => $request->reservation_datetime,
+            'reservation_status' => $request->reservation_status ?? 'pending'
         ]);
 
         // Actualizar estado de las mesas
-        Table::whereIn('number', $request->tables)
-             ->where('id_restaurant', $request->id_restaurant)
-             ->update(['status' => 'unavailable']);
+        Table::whereIn('table_number', $request->reservation_tables)
+             ->where('restaurant_id', $request->restaurant_id)
+             ->update(['table_status' => 'unavailable']);
 
         return response()->json($reservation->load(['user', 'restaurant']), 201);
     }
@@ -62,16 +62,16 @@ class ReservationController extends Controller
     public function update(Request $request, Reservation $reservation)
     {
         $request->validate([
-            'tables' => 'sometimes|array',
-            'datetime' => 'sometimes|date|after:now',
-            'status' => 'sometimes|in:pending,confirmed,seated,canceled,closed'
+            'reservation_tables' => 'sometimes|array',
+            'reservation_datetime' => 'sometimes|date|after:now',
+            'reservation_status' => 'sometimes|in:pending,confirmed,seated,canceled,closed'
         ]);
 
-        if ($request->has('status') && $request->status === 'canceled') {
+        if ($request->has('reservation_status') && $request->reservation_status === 'canceled') {
             // Liberar las mesas si se cancela
-            Table::whereIn('number', $reservation->tables)
-                 ->where('id_restaurant', $reservation->id_restaurant)
-                 ->update(['status' => 'available']);
+            Table::whereIn('table_number', $reservation->reservation_tables)
+                 ->where('restaurant_id', $reservation->restaurant_id)
+                 ->update(['table_status' => 'available']);
         }
 
         $reservation->update($request->all());
@@ -81,9 +81,9 @@ class ReservationController extends Controller
     public function destroy(Reservation $reservation)
     {
         // Liberar las mesas antes de eliminar
-        Table::whereIn('number', $reservation->tables)
-             ->where('id_restaurant', $reservation->id_restaurant)
-             ->update(['status' => 'available']);
+        Table::whereIn('table_number', $reservation->reservation_tables)
+             ->where('restaurant_id', $reservation->restaurant_id)
+             ->update(['table_status' => 'available']);
 
         $reservation->delete();
         return response()->json(null, 204);

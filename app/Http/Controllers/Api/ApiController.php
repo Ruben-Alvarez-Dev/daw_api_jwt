@@ -14,18 +14,18 @@ class ApiController extends Controller
     {
         // Form validation
         $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|string|email|unique:users',
-            'password' => 'required|confirmed', // password_confirmation
-            'role' => 'sometimes|in:admin,customer'
+            'user_name' => 'required|string',
+            'user_email' => 'required|string|email|unique:users,user_email',
+            'user_password' => 'required|confirmed', // password_confirmation
+            'user_role' => 'sometimes|in:admin,customer'
         ]);
 
         // Create new user
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'role' => $request->role ?? 'customer',
+            'user_name' => $request->user_name,
+            'user_email' => $request->user_email,
+            'user_password' => bcrypt($request->user_password),
+            'user_role' => $request->user_role ?? 'customer',
             'active_token' => null
         ]);
 
@@ -40,32 +40,16 @@ class ApiController extends Controller
     {
         // Form validation
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
+            'user_email' => 'required|email',
+            'user_password' => 'required'
         ]);
 
-        // Check if user exists
-        $user = User::where('email', $request->email)->first();
-        
-        // If user exists and has active token, invalidate it
-        if ($user && $user->active_token) {
-            try {
-                auth()->setToken($user->active_token)->invalidate();
-                $user->active_token = null;
-                $user->save();
-            } catch (\Exception $e) {
-                // Token might be already invalid
-            }
-        }
+        $credentials = [
+            'email' => $request->user_email,
+            'password' => $request->user_password
+        ];
 
-        // Attempt authentication and get new token
-        $token = auth()->attempt([
-            'email' => $request->email,
-            'password' => $request->password
-        ]);
-
-        if ($token) {
-            // Update user's active token
+        if ($token = auth()->attempt($credentials)) {
             $user = auth()->user();
             $user->active_token = $token;
             $user->save();
@@ -81,64 +65,62 @@ class ApiController extends Controller
         return response()->json([
             'status' => false,
             'message' => 'Invalid credentials'
-        ]);
+        ], 401);
     }
 
     // Get User Profile API (GET) - [Auth Token]
     public function profile() 
     {
-        $user = Auth::user();
-
         return response()->json([
             'status' => true,
             'message' => 'User profile data',
-            'data' => $user
+            'data' => auth()->user()
         ]);
     }
 
     // Get All Users API (GET) - [Auth Token + Admin Role]
     public function getUsers()
     {
-        $users = User::all();
-        
+        if (auth()->user()->user_role !== 'admin') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized - Admin access required'
+            ], 403);
+        }
+
         return response()->json([
             'status' => true,
-            'message' => 'Users retrieved successfully',
-            'data' => $users
+            'data' => User::all()
         ]);
     }
 
     // Refresh Token API (GET) - [Auth Token]
     public function refreshToken() 
     {
-        $user = auth()->user();
         $newToken = auth()->refresh();
-
-        // Update active token
+        
+        $user = auth()->user();
         $user->active_token = $newToken;
         $user->save();
 
         return response()->json([
             'status' => true,
-            'message' => 'Token refreshed successfully',
-            'token' => $newToken,
-            'expires_in' => auth()->factory()->getTTL() * 60
+            'token' => $newToken
         ]);
     }
 
     // User Logout API (GET) - [Auth Token]
     public function logout() 
     {
-        // Clear active token
         $user = auth()->user();
         $user->active_token = null;
         $user->save();
-
+        
         auth()->logout();
-
+        
         return response()->json([
             'status' => true,
-            'message' => 'User logged out successfully'
+            'message' => 'Successfully logged out'
         ]);
     }
 
@@ -153,18 +135,18 @@ class ApiController extends Controller
     {
         // Validate request data
         $request->validate([
-            'name' => 'sometimes|string',
-            'email' => 'sometimes|string|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|confirmed',
-            'role' => 'sometimes|in:admin,customer,supervisor'
+            'user_name' => 'sometimes|string',
+            'user_email' => 'sometimes|string|email|unique:users,user_email,' . $user->id,
+            'user_password' => 'sometimes|confirmed',
+            'user_role' => 'sometimes|in:admin,customer,supervisor'
         ]);
 
         // Prepare data for update
-        $data = $request->only(['name', 'email', 'role']);
+        $data = $request->only(['user_name', 'user_email', 'user_role']);
         
         // Only hash password if it's provided
-        if ($request->has('password')) {
-            $data['password'] = bcrypt($request->password);
+        if ($request->has('user_password')) {
+            $data['user_password'] = bcrypt($request->user_password);
         }
 
         // Update user

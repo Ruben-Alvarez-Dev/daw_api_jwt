@@ -12,16 +12,18 @@ class User extends Authenticatable implements JWTSubject
    /** @use HasFactory<\Database\Factories\UserFactory> */
    use HasFactory, Notifiable;
 
+   protected $primaryKey = 'user_id';
+
    /**
     * The attributes that are mass assignable.
     *
     * @var array<int, string>
     */
    protected $fillable = [
-       'name',
-       'email',
-       'password',
-       'role',
+       'user_name',
+       'user_email',
+       'user_password',
+       'user_role',
        'active_token'
    ];
 
@@ -31,7 +33,7 @@ class User extends Authenticatable implements JWTSubject
     * @var array<int, string>
     */
    protected $hidden = [
-       'password',
+       'user_password',
        'remember_token',
    ];
 
@@ -43,9 +45,9 @@ class User extends Authenticatable implements JWTSubject
    protected function casts(): array
    {
        return [
-           'email_verified_at' => 'datetime',
-           'password' => 'hashed',
-           'role' => 'string',  // Añadido el cast de role
+           'user_email_verified_at' => 'datetime',
+           'user_password' => 'hashed',
+           'user_role' => 'string',
        ];
    }
 
@@ -66,8 +68,48 @@ class User extends Authenticatable implements JWTSubject
     */
    public function getJWTCustomClaims()
    {
-       return [
-           'role' => $this->role  // Añadido el role a los claims del JWT
-       ];
+       return [];
+   }
+
+   /**
+    * Get the name of the unique identifier for the user.
+    */
+   public function getAuthIdentifierName()
+   {
+       return 'user_id';
+   }
+
+   /**
+    * Get the password for the user.
+    */
+   public function getAuthPassword()
+   {
+       return $this->user_password;
+   }
+
+   /**
+    * Get the email for the user.
+    */
+   public function getEmailAttribute()
+   {
+       return $this->user_email;
+   }
+
+   /**
+    * Get the password for the user.
+    */
+   public function getPasswordAttribute()
+   {
+       return $this->user_password;
+   }
+
+   public function username()
+   {
+       return 'user_email';
+   }
+
+   public function reservations()
+   {
+       return $this->hasMany(Reservation::class, 'user_id', 'user_id');
    }
 }

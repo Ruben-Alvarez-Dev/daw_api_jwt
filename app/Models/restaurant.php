@@ -9,19 +9,20 @@ class Restaurant extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'id_restaurant';
+    protected $primaryKey = 'restaurant_id';
 
     protected $fillable = [
-        'name',
-        'zones',
-        'capacity',
-        'isActive',
-        'status'
+        'restaurant_name',
+        'restaurant_zones',
+        'restaurant_capacity',
+        'restaurant_is_active',
+        'restaurant_status'
     ];
 
     protected $casts = [
-        'zones' => 'array',
-        'isActive' => 'boolean'
+        'restaurant_zones' => 'array',
+        'restaurant_is_active' => 'boolean',
+        'restaurant_capacity' => 'integer'
     ];
 
     protected static function boot()
@@ -29,8 +30,8 @@ class Restaurant extends Model
         parent::boot();
 
         static::creating(function ($restaurant) {
-            if (!isset($restaurant->zones)) {
-                $restaurant->zones = ['main room'];
+            if (!isset($restaurant->restaurant_zones)) {
+                $restaurant->restaurant_zones = ['main room'];
             }
         });
     }

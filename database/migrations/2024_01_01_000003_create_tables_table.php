@@ -6,33 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('tables', function (Blueprint $table) {
-            $table->id('id_table');
-            $table->foreignId('id_restaurant')
-                ->constrained('restaurants', 'id_restaurant')
+            $table->id('table_id');
+            $table->foreignId('restaurant_id')
+                ->constrained('restaurants', 'restaurant_id')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->string('number');
-            $table->unsignedSmallInteger('capacity')->default(4);
-            $table->enum('status', [
+            $table->string('table_name');
+            $table->integer('table_capacity');
+            $table->string('table_zone');
+            $table->enum('table_status', [
                 'available',
-                'unavailable'
+                'reserved',
+                'occupied',
+                'maintenance'
             ])->default('available');
             $table->timestamps();
 
-            // Índice único compuesto
-            $table->unique(['id_restaurant', 'number']);
+            // Índice único para evitar nombres duplicados en el mismo restaurante
+            $table->unique(['restaurant_id', 'table_name']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('tables');
