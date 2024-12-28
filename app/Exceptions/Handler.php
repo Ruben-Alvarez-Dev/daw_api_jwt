@@ -4,6 +4,8 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -23,8 +25,38 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->is('api/*')) {
+                // Suppress deprecation warnings in the response
+                error_reporting(E_ALL & ~E_DEPRECATED);
+                
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ], $e instanceof HttpException ? $e->getStatusCode() : 500);
+            }
         });
+    }
+
+    /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  Request  $request
+     * @param  Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function render($request, Throwable $e)
+    {
+        if ($request->is('api/*') || $request->wantsJson()) {
+            $status = $e instanceof HttpException ? $e->getStatusCode() : 500;
+            
+            return response()->json([
+                'message' => $e->getMessage(),
+                'status' => 'error',
+                'status_code' => $status
+            ], $status);
+        }
+
+        return parent::render($request, $e);
     }
 }

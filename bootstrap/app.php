@@ -11,6 +11,9 @@
 |
 */
 
+// Suprimir mensajes de deprecación
+error_reporting(E_ALL & ~E_DEPRECATED);
+
 $app = new Illuminate\Foundation\Application(
     $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
 );
@@ -40,6 +43,16 @@ $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     App\Exceptions\Handler::class
 );
+
+// Forzar que todas las respuestas sean JSON para rutas API
+$app->afterResolving(Illuminate\Contracts\Http\Kernel::class, function ($kernel) {
+    $kernel->prependMiddleware(function ($request, $next) {
+        if ($request->is('api/*')) {
+            $request->headers->set('Accept', 'application/json');
+        }
+        return $next($request);
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
