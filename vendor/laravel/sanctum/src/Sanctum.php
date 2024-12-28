@@ -4,15 +4,12 @@ namespace Laravel\Sanctum;
 
 use Mockery;
 
-/**
- * @template TTokenModel of \Illuminate\Database\Eloquent\Model&\Laravel\Sanctum\Contracts\HasAbilities = \Laravel\Sanctum\PersonalAccessToken
- */
 class Sanctum
 {
     /**
      * The personal access client model class name.
      *
-     * @var class-string<TTokenModel>
+     * @var string
      */
     public static $personalAccessTokenModel = 'Laravel\\Sanctum\\PersonalAccessToken';
 
@@ -29,6 +26,13 @@ class Sanctum
      * @var callable|null
      */
     public static $accessTokenAuthenticationCallback;
+
+    /**
+     * Indicates if Sanctum's migrations will be run.
+     *
+     * @var bool
+     */
+    public static $runsMigrations = true;
 
     /**
      * Get the current application URL from the "APP_URL" environment variable - with port.
@@ -78,7 +82,7 @@ class Sanctum
     /**
      * Set the personal access token model name.
      *
-     * @param  class-string<TTokenModel>  $model
+     * @param  string  $model
      * @return void
      */
     public static function usePersonalAccessTokenModel($model)
@@ -109,9 +113,31 @@ class Sanctum
     }
 
     /**
+     * Determine if Sanctum's migrations should be run.
+     *
+     * @return bool
+     */
+    public static function shouldRunMigrations()
+    {
+        return static::$runsMigrations;
+    }
+
+    /**
+     * Configure Sanctum to not register its migrations.
+     *
+     * @return static
+     */
+    public static function ignoreMigrations()
+    {
+        static::$runsMigrations = false;
+
+        return new static;
+    }
+
+    /**
      * Get the token model class name.
      *
-     * @return class-string<TTokenModel>
+     * @return string
      */
     public static function personalAccessTokenModel()
     {

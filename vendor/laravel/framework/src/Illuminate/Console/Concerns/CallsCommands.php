@@ -53,7 +53,7 @@ trait CallsCommands
     }
 
     /**
-     * Run the given console command.
+     * Run the given the console command.
      *
      * @param  \Symfony\Component\Console\Command\Command|string  $command
      * @param  array  $arguments

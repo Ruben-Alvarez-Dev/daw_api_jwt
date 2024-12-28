@@ -5,8 +5,6 @@ namespace Illuminate\Events;
 use Closure;
 use Laravel\SerializableClosure\SerializableClosure;
 
-use function Illuminate\Support\enum_value;
-
 class QueuedClosure
 {
     /**
@@ -71,12 +69,12 @@ class QueuedClosure
     /**
      * Set the desired queue for the job.
      *
-     * @param  \BackedEnum|string|null  $queue
+     * @param  string|null  $queue
      * @return $this
      */
     public function onQueue($queue)
     {
-        $this->queue = enum_value($queue);
+        $this->queue = $queue;
 
         return $this;
     }

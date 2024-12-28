@@ -37,7 +37,7 @@ class NewAccessToken implements Arrayable, Jsonable
     /**
      * Get the instance as an array.
      *
-     * @return array<string, string>
+     * @return array
      */
     public function toArray()
     {

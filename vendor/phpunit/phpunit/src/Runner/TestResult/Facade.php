@@ -12,7 +12,6 @@ namespace PHPUnit\TestRunner\TestResult;
 use PHPUnit\Event\EventFacadeIsSealedException;
 use PHPUnit\Event\Facade as EventFacade;
 use PHPUnit\Event\UnknownSubscriberTypeException;
-use PHPUnit\TestRunner\IssueFilter;
 use PHPUnit\TextUI\Configuration\Registry as ConfigurationRegistry;
 
 /**
@@ -97,7 +96,7 @@ final class Facade
 
             self::$collector = new Collector(
                 EventFacade::instance(),
-                new IssueFilter($configuration->source()),
+                $configuration->source(),
             );
         }
 

@@ -117,7 +117,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
     ];
 
     /**
-     * Create a new generator command instance.
+     * Create a new controller creator command instance.
      *
      * @param  \Illuminate\Filesystem\Filesystem  $files
      * @return void
@@ -183,7 +183,9 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
         $info = $this->type;
 
         if (in_array(CreatesMatchingTest::class, class_uses_recursive($this))) {
-            $this->handleTestCreation($path);
+            if ($this->handleTestCreation($path)) {
+                $info .= ' and test';
+            }
         }
 
         if (windows_os()) {
@@ -417,13 +419,7 @@ abstract class GeneratorCommand extends Command implements PromptsForMissingInpu
      */
     protected function getNameInput()
     {
-        $name = trim($this->argument('name'));
-
-        if (Str::endsWith($name, '.php')) {
-            return Str::substr($name, 0, -4);
-        }
-
-        return $name;
+        return trim($this->argument('name'));
     }
 
     /**

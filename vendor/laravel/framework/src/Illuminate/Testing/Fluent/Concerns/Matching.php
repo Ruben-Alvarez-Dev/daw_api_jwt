@@ -7,8 +7,6 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 use PHPUnit\Framework\Assert as PHPUnit;
 
-use function Illuminate\Support\enum_value;
-
 trait Matching
 {
     /**
@@ -33,9 +31,9 @@ trait Matching
             return $this;
         }
 
-        $expected = $expected instanceof Arrayable
-            ? $expected->toArray()
-            : enum_value($expected);
+        if ($expected instanceof Arrayable) {
+            $expected = $expected->toArray();
+        }
 
         $this->ensureSorted($expected);
         $this->ensureSorted($actual);
@@ -71,9 +69,9 @@ trait Matching
             return $this;
         }
 
-        $expected = $expected instanceof Arrayable
-            ? $expected->toArray()
-            : enum_value($expected);
+        if ($expected instanceof Arrayable) {
+            $expected = $expected->toArray();
+        }
 
         $this->ensureSorted($expected);
         $this->ensureSorted($actual);
@@ -161,15 +159,13 @@ trait Matching
             $this->prop($key) ?? $this->prop()
         );
 
-        $missing = Collection::make($expected)
-            ->map(fn ($search) => enum_value($search))
-            ->reject(function ($search) use ($key, $actual) {
-                if ($actual->containsStrict($key, $search)) {
-                    return true;
-                }
+        $missing = Collection::make($expected)->reject(function ($search) use ($key, $actual) {
+            if ($actual->containsStrict($key, $search)) {
+                return true;
+            }
 
-                return $actual->containsStrict($search);
-            });
+            return $actual->containsStrict($search);
+        });
 
         if ($missing->whereInstanceOf('Closure')->isNotEmpty()) {
             PHPUnit::assertEmpty(

@@ -2,8 +2,6 @@
 
 namespace Illuminate\View\Engines;
 
-use Illuminate\Database\RecordNotFoundException;
-use Illuminate\Database\RecordsNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\View\Compilers\CompilerInterface;
@@ -104,10 +102,7 @@ class CompilerEngine extends PhpEngine
      */
     protected function handleViewException(Throwable $e, $obLevel)
     {
-        if ($e instanceof HttpException ||
-            $e instanceof HttpResponseException ||
-            $e instanceof RecordNotFoundException ||
-            $e instanceof RecordsNotFoundException) {
+        if ($e instanceof HttpException || $e instanceof HttpResponseException) {
             parent::handleViewException($e, $obLevel);
         }
 

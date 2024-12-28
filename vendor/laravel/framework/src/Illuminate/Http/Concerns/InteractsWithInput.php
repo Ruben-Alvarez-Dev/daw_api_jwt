@@ -5,15 +5,13 @@ namespace Illuminate\Http\Concerns;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Traits\Dumpable;
 use SplFileInfo;
 use stdClass;
 use Symfony\Component\HttpFoundation\InputBag;
+use Symfony\Component\VarDumper\VarDumper;
 
 trait InteractsWithInput
 {
-    use Dumpable;
-
     /**
      * Retrieve a server variable from the request.
      *
@@ -403,42 +401,13 @@ trait InteractsWithInput
      */
     public function enum($key, $enumClass)
     {
-        if ($this->isNotFilled($key) || ! $this->isBackedEnum($enumClass)) {
+        if ($this->isNotFilled($key) ||
+            ! enum_exists($enumClass) ||
+            ! method_exists($enumClass, 'tryFrom')) {
             return null;
         }
 
         return $enumClass::tryFrom($this->input($key));
-    }
-
-    /**
-     * Retrieve input from the request as an array of enums.
-     *
-     * @template TEnum
-     *
-     * @param  string  $key
-     * @param  class-string<TEnum>  $enumClass
-     * @return TEnum[]
-     */
-    public function enums($key, $enumClass)
-    {
-        if ($this->isNotFilled($key) || ! $this->isBackedEnum($enumClass)) {
-            return [];
-        }
-
-        return $this->collect($key)->map(function ($value) use ($enumClass) {
-            return $enumClass::tryFrom($value);
-        })->filter()->all();
-    }
-
-    /**
-     * Determine if the given enum class is backed.
-     *
-     * @param  class-string  $enumClass
-     * @return bool
-     */
-    protected function isBackedEnum($enumClass)
-    {
-        return enum_exists($enumClass) && method_exists($enumClass, 'tryFrom');
     }
 
     /**
@@ -638,6 +607,19 @@ trait InteractsWithInput
     }
 
     /**
+     * Dump the request items and end the script.
+     *
+     * @param  mixed  ...$keys
+     * @return never
+     */
+    public function dd(...$keys)
+    {
+        $this->dump(...$keys);
+
+        exit(1);
+    }
+
+    /**
      * Dump the items.
      *
      * @param  mixed  $keys
@@ -647,7 +629,7 @@ trait InteractsWithInput
     {
         $keys = is_array($keys) ? $keys : func_get_args();
 
-        dump(count($keys) > 0 ? $this->only($keys) : $this->all());
+        VarDumper::dump(count($keys) > 0 ? $this->only($keys) : $this->all());
 
         return $this;
     }

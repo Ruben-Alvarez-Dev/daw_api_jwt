@@ -224,7 +224,7 @@ class StartSession
                 $this->getCookieExpirationDate(),
                 $config['path'],
                 $config['domain'],
-                $config['secure'],
+                $config['secure'] ?? false,
                 $config['http_only'] ?? true,
                 false,
                 $config['same_site'] ?? null,

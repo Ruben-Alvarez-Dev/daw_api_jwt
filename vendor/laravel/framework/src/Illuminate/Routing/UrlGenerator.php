@@ -231,26 +231,6 @@ class UrlGenerator implements UrlGeneratorContract
     }
 
     /**
-     * Generate an absolute URL with the given query parameters.
-     *
-     * @param  string  $path
-     * @param  array  $query
-     * @param  mixed  $extra
-     * @param  bool|null  $secure
-     * @return string
-     */
-    public function query($path, $query = [], $extra = [], $secure = null)
-    {
-        [$path, $existingQueryString] = $this->extractQueryString($path);
-
-        parse_str(Str::after($existingQueryString, '?'), $existingQueryArray);
-
-        return rtrim($this->to($path.'?'.Arr::query(
-            array_merge($existingQueryArray, $query)
-        ), $extra, $secure), '?');
-    }
-
-    /**
      * Generate a secure, absolute URL to the given path.
      *
      * @param  string  $path
@@ -347,7 +327,7 @@ class UrlGenerator implements UrlGeneratorContract
     /**
      * Create a signed route URL for a named route.
      *
-     * @param  \BackedEnum|string  $name
+     * @param  string  $name
      * @param  mixed  $parameters
      * @param  \DateTimeInterface|\DateInterval|int|null  $expiration
      * @param  bool  $absolute
@@ -370,11 +350,7 @@ class UrlGenerator implements UrlGeneratorContract
         $key = call_user_func($this->keyResolver);
 
         return $this->route($name, $parameters + [
-            'signature' => hash_hmac(
-                'sha256',
-                $this->route($name, $parameters, $absolute),
-                is_array($key) ? $key[0] : $key
-            ),
+            'signature' => hash_hmac('sha256', $this->route($name, $parameters, $absolute), $key),
         ], $absolute);
     }
 
@@ -402,7 +378,7 @@ class UrlGenerator implements UrlGeneratorContract
     /**
      * Create a temporary signed route URL for a named route.
      *
-     * @param  \BackedEnum|string  $name
+     * @param  string  $name
      * @param  \DateTimeInterface|\DateInterval|int  $expiration
      * @param  array  $parameters
      * @param  bool  $absolute
@@ -459,20 +435,9 @@ class UrlGenerator implements UrlGeneratorContract
 
         $original = rtrim($url.'?'.$queryString, '?');
 
-        $keys = call_user_func($this->keyResolver);
+        $signature = hash_hmac('sha256', $original, call_user_func($this->keyResolver));
 
-        $keys = is_array($keys) ? $keys : [$keys];
-
-        foreach ($keys as $key) {
-            if (hash_equals(
-                hash_hmac('sha256', $original, $key),
-                (string) $request->query('signature', '')
-            )) {
-                return true;
-            }
-        }
-
-        return false;
+        return hash_equals($signature, (string) $request->query('signature', ''));
     }
 
     /**
@@ -491,19 +456,15 @@ class UrlGenerator implements UrlGeneratorContract
     /**
      * Get the URL to a named route.
      *
-     * @param  \BackedEnum|string  $name
+     * @param  string  $name
      * @param  mixed  $parameters
      * @param  bool  $absolute
      * @return string
      *
-     * @throws \Symfony\Component\Routing\Exception\RouteNotFoundException|\InvalidArgumentException
+     * @throws \Symfony\Component\Routing\Exception\RouteNotFoundException
      */
     public function route($name, $parameters = [], $absolute = true)
     {
-        if ($name instanceof BackedEnum && ! is_string($name = $name->value)) {
-            throw new InvalidArgumentException('Attribute [name] expects a string backed enum.');
-        }
-
         if (! is_null($route = $this->routes->getByName($name))) {
             return $this->toRoute($route, $parameters, $absolute);
         }
@@ -529,16 +490,12 @@ class UrlGenerator implements UrlGeneratorContract
     public function toRoute($route, $parameters, $absolute)
     {
         $parameters = collect(Arr::wrap($parameters))->map(function ($value, $key) use ($route) {
-            return $value instanceof UrlRoutable && $route->bindingFieldFor($key)
+            $value = $value instanceof UrlRoutable && $route->bindingFieldFor($key)
                     ? $value->{$route->bindingFieldFor($key)}
                     : $value;
-        })->all();
 
-        array_walk_recursive($parameters, function (&$item) {
-            if ($item instanceof BackedEnum) {
-                $item = $item->value;
-            }
-        });
+            return $value instanceof BackedEnum ? $value->value : $value;
+        })->all();
 
         return $this->routeUrl()->to(
             $route, $this->formatParameters($parameters), $absolute
@@ -586,7 +543,7 @@ class UrlGenerator implements UrlGeneratorContract
     /**
      * Format the array of URL parameters.
      *
-     * @param  mixed  $parameters
+     * @param  mixed|array  $parameters
      * @return array
      */
     public function formatParameters($parameters)
@@ -726,19 +683,6 @@ class UrlGenerator implements UrlGeneratorContract
         $this->cachedScheme = null;
 
         $this->forceScheme = $scheme ? $scheme.'://' : null;
-    }
-
-    /**
-     * Force the use of the HTTPS scheme for all generated URLs.
-     *
-     * @param  bool  $force
-     * @return void
-     */
-    public function forceHttps($force = true)
-    {
-        if ($force) {
-            $this->forceScheme('https');
-        }
     }
 
     /**

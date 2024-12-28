@@ -11,18 +11,6 @@ use Illuminate\Support\Collection;
 use IteratorAggregate;
 use JsonSerializable;
 
-/**
- * @template TKey of array-key
- *
- * @template-covariant TValue
- *
- * @extends AbstractPaginator<TKey, TValue>
- *
- * @implements Arrayable<TKey, TValue>
- * @implements ArrayAccess<TKey, TValue>
- * @implements IteratorAggregate<TKey, TValue>
- * @implements LengthAwarePaginatorContract<TKey, TValue>
- */
 class LengthAwarePaginator extends AbstractPaginator implements Arrayable, ArrayAccess, Countable, IteratorAggregate, Jsonable, JsonSerializable, LengthAwarePaginatorContract
 {
     /**
@@ -42,7 +30,7 @@ class LengthAwarePaginator extends AbstractPaginator implements Arrayable, Array
     /**
      * Create a new paginator instance.
      *
-     * @param  Collection<TKey, TValue>|Arrayable<TKey, TValue>|iterable<TKey, TValue>|null  $items
+     * @param  mixed  $items
      * @param  int  $total
      * @param  int  $perPage
      * @param  int|null  $currentPage

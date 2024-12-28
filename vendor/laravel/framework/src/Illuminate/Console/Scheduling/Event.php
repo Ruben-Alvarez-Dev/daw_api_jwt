@@ -5,24 +5,23 @@ namespace Illuminate\Console\Scheduling;
 use Closure;
 use Cron\CronExpression;
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\ClientInterface as HttpClientInterface;
 use GuzzleHttp\Exception\TransferException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Reflector;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Traits\Macroable;
 use Illuminate\Support\Traits\ReflectsClosures;
-use Illuminate\Support\Traits\Tappable;
 use Psr\Http\Client\ClientExceptionInterface;
 use Symfony\Component\Process\Process;
 use Throwable;
 
 class Event
 {
-    use Macroable, ManagesAttributes, ManagesFrequencies, ReflectsClosures, Tappable;
+    use Macroable, ManagesFrequencies, ReflectsClosures;
 
     /**
      * The command string.
@@ -30,6 +29,90 @@ class Event
      * @var string|null
      */
     public $command;
+
+    /**
+     * The cron expression representing the event's frequency.
+     *
+     * @var string
+     */
+    public $expression = '* * * * *';
+
+    /**
+     * How often to repeat the event during a minute.
+     *
+     * @var int|null
+     */
+    public $repeatSeconds = null;
+
+    /**
+     * The timezone the date should be evaluated on.
+     *
+     * @var \DateTimeZone|string
+     */
+    public $timezone;
+
+    /**
+     * The user the command should run as.
+     *
+     * @var string|null
+     */
+    public $user;
+
+    /**
+     * The list of environments the command should run under.
+     *
+     * @var array
+     */
+    public $environments = [];
+
+    /**
+     * Indicates if the command should run in maintenance mode.
+     *
+     * @var bool
+     */
+    public $evenInMaintenanceMode = false;
+
+    /**
+     * Indicates if the command should not overlap itself.
+     *
+     * @var bool
+     */
+    public $withoutOverlapping = false;
+
+    /**
+     * Indicates if the command should only be allowed to run on one server for each cron expression.
+     *
+     * @var bool
+     */
+    public $onOneServer = false;
+
+    /**
+     * The number of minutes the mutex should be valid.
+     *
+     * @var int
+     */
+    public $expiresAt = 1440;
+
+    /**
+     * Indicates if the command should run in the background.
+     *
+     * @var bool
+     */
+    public $runInBackground = false;
+
+    /**
+     * The array of filter callbacks.
+     *
+     * @var array
+     */
+    protected $filters = [];
+
+    /**
+     * The array of reject callbacks.
+     *
+     * @var array
+     */
+    protected $rejects = [];
 
     /**
      * The location that output should be sent to.
@@ -553,9 +636,9 @@ class Event
      */
     protected function pingCallback($url)
     {
-        return function (Container $container) use ($url) {
+        return function (Container $container, HttpClient $http) use ($url) {
             try {
-                $this->getHttpClient($container)->request('GET', $url);
+                $http->request('GET', $url);
             } catch (ClientExceptionInterface|TransferException $e) {
                 $container->make(ExceptionHandler::class)->report($e);
             }
@@ -563,22 +646,114 @@ class Event
     }
 
     /**
-     * Get the Guzzle HTTP client to use to send pings.
+     * State that the command should run in the background.
      *
-     * @param  \Illuminate\Contracts\Container\Container  $container
-     * @return \GuzzleHttp\ClientInterface
+     * @return $this
      */
-    protected function getHttpClient(Container $container)
+    public function runInBackground()
     {
-        return match (true) {
-            $container->bound(HttpClientInterface::class) => $container->make(HttpClientInterface::class),
-            $container->bound(HttpClient::class) => $container->make(HttpClient::class),
-            default => new HttpClient([
-                'connect_timeout' => 10,
-                'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
-                'timeout' => 30,
-            ]),
+        $this->runInBackground = true;
+
+        return $this;
+    }
+
+    /**
+     * Set which user the command should run as.
+     *
+     * @param  string  $user
+     * @return $this
+     */
+    public function user($user)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Limit the environments the command should run in.
+     *
+     * @param  array|mixed  $environments
+     * @return $this
+     */
+    public function environments($environments)
+    {
+        $this->environments = is_array($environments) ? $environments : func_get_args();
+
+        return $this;
+    }
+
+    /**
+     * State that the command should run even in maintenance mode.
+     *
+     * @return $this
+     */
+    public function evenInMaintenanceMode()
+    {
+        $this->evenInMaintenanceMode = true;
+
+        return $this;
+    }
+
+    /**
+     * Do not allow the event to overlap each other.
+     *
+     * The expiration time of the underlying cache lock may be specified in minutes.
+     *
+     * @param  int  $expiresAt
+     * @return $this
+     */
+    public function withoutOverlapping($expiresAt = 1440)
+    {
+        $this->withoutOverlapping = true;
+
+        $this->expiresAt = $expiresAt;
+
+        return $this->skip(function () {
+            return $this->mutex->exists($this);
+        });
+    }
+
+    /**
+     * Allow the event to only run on one server for each cron expression.
+     *
+     * @return $this
+     */
+    public function onOneServer()
+    {
+        $this->onOneServer = true;
+
+        return $this;
+    }
+
+    /**
+     * Register a callback to further filter the schedule.
+     *
+     * @param  \Closure|bool  $callback
+     * @return $this
+     */
+    public function when($callback)
+    {
+        $this->filters[] = Reflector::isCallable($callback) ? $callback : function () use ($callback) {
+            return $callback;
         };
+
+        return $this;
+    }
+
+    /**
+     * Register a callback to further filter the schedule.
+     *
+     * @param  \Closure|bool  $callback
+     * @return $this
+     */
+    public function skip($callback)
+    {
+        $this->rejects[] = Reflector::isCallable($callback) ? $callback : function () use ($callback) {
+            return $callback;
+        };
+
+        return $this;
     }
 
     /**

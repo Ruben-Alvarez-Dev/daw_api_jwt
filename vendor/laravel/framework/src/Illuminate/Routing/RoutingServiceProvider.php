@@ -77,9 +77,7 @@ class RoutingServiceProvider extends ServiceProvider
             });
 
             $url->setKeyResolver(function () {
-                $config = $this->app->make('config');
-
-                return [$config->get('app.key'), ...($config->get('app.previous_keys') ?? [])];
+                return $this->app->make('config')->get('app.key');
             });
 
             // If the route collection is "rebound", for example, when the routes stay
@@ -130,6 +128,8 @@ class RoutingServiceProvider extends ServiceProvider
      * Register a binding for the PSR-7 request implementation.
      *
      * @return void
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function registerPsrRequest()
     {
@@ -157,6 +157,8 @@ class RoutingServiceProvider extends ServiceProvider
      * Register a binding for the PSR-7 response implementation.
      *
      * @return void
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function registerPsrResponse()
     {

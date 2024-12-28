@@ -77,7 +77,7 @@ class ViewMakeCommand extends GeneratorCommand
     {
         $name = trim($this->argument('name'));
 
-        $name = str_replace(['\\', '.'], '/', $name);
+        $name = str_replace(['\\', '.'], '/', $this->argument('name'));
 
         return $name;
     }
@@ -130,7 +130,7 @@ class ViewMakeCommand extends GeneratorCommand
      */
     protected function handleTestCreation($path): bool
     {
-        if (! $this->option('test') && ! $this->option('pest') && ! $this->option('phpunit')) {
+        if (! $this->option('test') && ! $this->option('pest')) {
             return false;
         }
 
@@ -142,11 +142,7 @@ class ViewMakeCommand extends GeneratorCommand
 
         File::ensureDirectoryExists(dirname($this->getTestPath()), 0755, true);
 
-        $result = File::put($path = $this->getTestPath(), $contents);
-
-        $this->components->info(sprintf('%s [%s] created successfully.', 'Test', $path));
-
-        return $result !== false;
+        return File::put($this->getTestPath(), $contents);
     }
 
     /**
@@ -205,7 +201,7 @@ class ViewMakeCommand extends GeneratorCommand
      */
     protected function getTestStub()
     {
-        $stubName = 'view.'.($this->usingPest() ? 'pest' : 'test').'.stub';
+        $stubName = 'view.'.($this->option('pest') ? 'pest' : 'test').'.stub';
 
         return file_exists($customPath = $this->laravel->basePath("stubs/$stubName"))
             ? $customPath
@@ -223,22 +219,6 @@ class ViewMakeCommand extends GeneratorCommand
             ->replace('/', '.')
             ->lower()
             ->value();
-    }
-
-    /**
-     * Determine if Pest is being used by the application.
-     *
-     * @return bool
-     */
-    protected function usingPest()
-    {
-        if ($this->option('phpunit')) {
-            return false;
-        }
-
-        return $this->option('pest') ||
-            (function_exists('\Pest\\version') &&
-             file_exists(base_path('tests').'/Pest.php'));
     }
 
     /**
